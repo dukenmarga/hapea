@@ -6,6 +6,8 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
+    volumes:
+      - ./:/data/ # map current directory ./api to container path, will act as live code
     ports:
       - "8080:8080"
     restart: unless-stopped
