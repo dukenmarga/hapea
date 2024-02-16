@@ -1,0 +1,22 @@
+version: '3.7'
+services:
+  hapea:
+    image: server-hapea
+    container_name: hapea
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/data/ # map current directory ./api to container path, will act as live code
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - backend
+
+networks:
+  backend:
+
+volumes:
+  cache:
+    driver: local
