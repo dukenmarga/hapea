@@ -34,7 +34,7 @@ func main() {
 			return
 		}
 
-		tmplFile := "article.tmpl.tex"
+		tmplFile := "simple-article.tmpl.tex"
 		filename := id.String()
 		outputPath := "./files/"
 		texFilename := filename + ".tex"
