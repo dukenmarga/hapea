@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"text/template"
@@ -38,85 +39,121 @@ func main() {
 		filename := id.String()
 		outputPath := "./files/"
 		texFilename := filename + ".tex"
+		pdfFilename := filename + ".pdf"
 
 		// Prepare tex file handler
-		// f, err := os.OpenFile(texPath+texFilename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
-		f, err := os.Create(outputPath + texFilename)
+		f, err := openTexFile(outputPath, texFilename)
 		if err != nil {
-			c.JSON(500, gin.H{
-				"name": "tex handler",
-				"id":   id.String(),
-				"msg":  err.Error(),
-			})
+			log.Printf("Error: %s", err)
+			errorResponse(c, id, "open tex", err)
 			return
 		}
+		defer f.Close()
 
 		// Insert latex string based on template
-		tmpl, err := template.New(tmplFile).ParseFiles(tmplFile)
+		tmpl, err := insertTexToTemplate(tmplFile)
 		if err != nil {
-			c.JSON(500, gin.H{
-				"name": "read tmpl",
-				"id":   id.String(),
-				"msg":  err.Error(),
-			})
+			log.Printf("Error: %s", err)
+			errorResponse(c, id, "parse tmpl", err)
 			return
 		}
 
 		// Write the latex string into a file
-		err = tmpl.Execute(f, doc)
+		err = writeLatex(tmpl, f, doc)
 		if err != nil {
-			c.JSON(500, gin.H{
-				"name": "write tex",
-				"id":   id.String(),
-				"msg":  err.Error(),
-			})
+			log.Printf("Error: %s", err)
+			errorResponse(c, id, "write tex", err)
 			return
 		}
 
 		// Convert the file tex into PDF
-		// pdflatex <filename.tex>
-		pdfFilename := filename + ".pdf"
-		proc := exec.Command(
-			"pdflatex",
-			"-halt-on-error",
-			"-output-directory",
-			outputPath,
-			outputPath+texFilename,
-		)
-		out := bytes.NewBuffer([]byte{})
-		proc.Stdout = out
-		err = proc.Run()
+		err = convertTexToPDF(outputPath, texFilename)
 		if err != nil {
-			c.JSON(500, gin.H{
-				"name": "convert",
-				"id":   id.String(),
-				"msg":  out.String() + err.Error(),
-			})
+			log.Printf("Error: %s", err)
+			errorResponse(c, id, "convert tex", err)
 			return
 		}
 
 		// Attach the PDF (downloaded in browser)
-		c.FileAttachment(fmt.Sprintf("%s/%s", outputPath, pdfFilename), pdfFilename)
-		c.Writer.Header().Set("Content-type", "application/octet-stream")
+		attachPDF(c, outputPath, pdfFilename)
 
 		// Delete the file
-		deleteExts := []string{
-			".pdf",
-			".tex",
-			".log",
-			".aux",
-		}
-		for _, ext := range deleteExts {
-			err = os.Remove(outputPath + filename + ext)
-			if err != nil {
-				c.JSON(500, gin.H{
-					"name": "delete " + ext,
-					"id":   id.String(),
-					"msg":  err.Error(),
-				})
-				return
-			}
+		err = deleteTmpFiles(filename, outputPath)
+		if err != nil {
+			log.Printf("Error: %s", err)
+			return
 		}
 	})
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+}
+
+func openTexFile(outputPath string, texFilename string) (*os.File, error) {
+	f, err := os.Create(outputPath + texFilename)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
+}
+
+func insertTexToTemplate(tmplFile string) (*template.Template, error) {
+	tmpl, err := template.New(tmplFile).ParseFiles(tmplFile)
+	if err != nil {
+		return nil, err
+	}
+	return tmpl, nil
+}
+
+func writeLatex(tmpl *template.Template, f *os.File, doc Document) error {
+	err := tmpl.Execute(f, doc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func convertTexToPDF(outputPath string, texFilename string) error {
+	// pdflatex <filename.tex>
+	proc := exec.Command(
+		"pdflatex",
+		"-halt-on-error",
+		"-output-directory",
+		outputPath,
+		outputPath+texFilename,
+	)
+	out := bytes.NewBuffer([]byte{})
+	proc.Stdout = out
+	err := proc.Run()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func attachPDF(c *gin.Context, outputPath string, pdfFilename string) {
+	c.FileAttachment(fmt.Sprintf("%s/%s", outputPath, pdfFilename), pdfFilename)
+	c.Writer.Header().Set("Content-type", "application/octet-stream")
+}
+
+func deleteTmpFiles(filename string, outputPath string) error {
+	deleteExts := []string{
+		".pdf",
+		".tex",
+		".log",
+		".aux",
+	}
+	for _, ext := range deleteExts {
+		err := os.Remove(outputPath + filename + ext)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func errorResponse(c *gin.Context, id uuid.UUID, name string, err error) {
+	c.JSON(500, gin.H{
+		"name": name,
+		"id":   id.String(),
+		"msg":  err.Error(),
+	})
 }

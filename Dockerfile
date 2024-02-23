@@ -38,7 +38,6 @@ EXPOSE 8080
 
 # Use /data as base where files directory will be
 WORKDIR /home/user1/
-RUN cat ./article.tmpl.tex
 
 # Run
 CMD ["/home/user1/app", "&"]
