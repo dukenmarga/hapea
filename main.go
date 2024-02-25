@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,7 +15,8 @@ import (
 )
 
 type Document struct {
-	Latex string `uri:"latex" binding:"required"`
+	Latex  string `uri:"latex" binding:"required"`
+	Format string `uri:"format" default:"raw"` // raw, base64
 }
 
 func main() {
@@ -89,7 +92,14 @@ func main() {
 		var err error
 		id := uuid.New()
 		doc := Document{
-			Latex: c.PostForm("latex"),
+			Latex:  c.PostForm("latex"),
+			Format: c.PostForm("format"),
+		}
+
+		// If the format is base64, decode it
+		if doc.Format == "base64" {
+			var decodedByte, _ = base64.StdEncoding.DecodeString(doc.Latex)
+			doc.Latex = string(decodedByte)
 		}
 
 		tmplFile := "simple-article.tmpl.tex"
@@ -171,17 +181,22 @@ func writeLatex(tmpl *template.Template, f *os.File, doc Document) error {
 func convertTexToPDF(outputPath string, texFilename string) error {
 	// pdflatex <filename.tex>
 	proc := exec.Command(
-		"pdflatex",
+		"lualatex",
 		"-halt-on-error",
 		"-output-directory",
 		outputPath,
 		outputPath+texFilename,
 	)
+	proc.Env = os.Environ()
+	proc.Env = append(proc.Env, "buf_size=1000000")
+
 	out := bytes.NewBuffer([]byte{})
+	stderr := bytes.NewBuffer([]byte{})
 	proc.Stdout = out
+	proc.Stderr = stderr
 	err := proc.Run()
 	if err != nil {
-		return err
+		return errors.New(err.Error() + ": " + stderr.String())
 	}
 	return nil
 }

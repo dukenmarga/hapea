@@ -14,6 +14,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get -y install texlive-fonts-recommended && \
     apt-get -y install texlive-fonts-extra && \
     apt-get -y install texlive-latex-extra && \
+    apt-get -y install texlive-luatex && \
     wget ${url} && \
     rm -rf /home/go-compiler  && mkdir -p /home/go-compiler && tar -C /home/go-compiler -xzf ${file}
 
