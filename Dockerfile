@@ -23,7 +23,7 @@ COPY . /home/user1/
 WORKDIR /home/user1/
 
 # Add non-root user
-RUN --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=type=cache,mode=0755,target=/go/pkg/mod \
     go mod vendor && \
     useradd -u 8877 user1 && \
     mkdir -p /home/user1/files && \

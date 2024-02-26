@@ -87,7 +87,8 @@ func main() {
 			return
 		}
 	})
-	// Simple latex conversion from URI (GET)
+
+	// Handle latex conversion from POST
 	r.POST("/api/v1/convert", func(c *gin.Context) {
 		var err error
 		id := uuid.New()
