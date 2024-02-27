@@ -88,14 +88,78 @@ func main() {
 		}
 	})
 
-	// Handle latex conversion from POST
-	r.POST("/api/v1/convert", func(c *gin.Context) {
+	// Handle latex conversion (send as form format) from POST
+	r.POST("/api/v1/convert/form", func(c *gin.Context) {
 		var err error
 		id := uuid.New()
 		doc := Document{
 			Latex:  c.PostForm("latex"),
 			Format: c.PostForm("format"),
 		}
+
+		// If the format is base64, decode it
+		if doc.Format == "base64" {
+			var decodedByte, _ = base64.StdEncoding.DecodeString(doc.Latex)
+			doc.Latex = string(decodedByte)
+		}
+
+		tmplFile := "simple-article.tmpl.tex"
+		filename := id.String()
+		outputPath := "./files/"
+		texFilename := filename + ".tex"
+		pdfFilename := filename + ".pdf"
+
+		// Prepare tex file handler
+		f, err := openTexFile(outputPath, texFilename)
+		if err != nil {
+			log.Printf("Error: %s", err)
+			errorResponse(c, id, "open tex", err)
+			return
+		}
+		defer f.Close()
+
+		// Insert latex string based on template
+		tmpl, err := insertTexToTemplate(tmplFile)
+		if err != nil {
+			log.Printf("Error: %s", err)
+			errorResponse(c, id, "parse tmpl", err)
+			return
+		}
+
+		// Write the latex string into a file
+		err = writeLatex(tmpl, f, doc)
+		if err != nil {
+			log.Printf("Error: %s", err)
+			errorResponse(c, id, "write tex", err)
+			return
+		}
+
+		// Convert the file tex into PDF
+		err = convertTexToPDF(outputPath, texFilename)
+		if err != nil {
+			log.Printf("Error: %s", err)
+			errorResponse(c, id, "convert tex", err)
+			return
+		}
+
+		// Attach the PDF (downloaded in browser)
+		attachPDF(c, outputPath, pdfFilename)
+
+		// Delete the file
+		err = deleteTmpFiles(filename, outputPath)
+		if err != nil {
+			log.Printf("Error: %s", err)
+			return
+		}
+	})
+
+	// Handle latex conversion (send as JSON format) from POST
+	r.POST("/api/v1/convert/json", func(c *gin.Context) {
+		var err error
+		id := uuid.New()
+
+		doc := Document{}
+		c.BindJSON(&doc)
 
 		// If the format is base64, decode it
 		if doc.Format == "base64" {
