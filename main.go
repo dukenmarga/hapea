@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type Document struct {
@@ -228,7 +229,14 @@ func main() {
 		}
 	})
 
-	log.Fatal(autotls.Run(r, "hapea.linearstep.com"))
+	r.Static("/.well-known", "/var/www/certbot/.well-known/")
+	m := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("hapea.linearstep.com"),
+		Cache:      autocert.DirCache("/var/www/certbot/"),
+	}
+
+	log.Fatal(autotls.RunWithManager(r, &m))
 }
 
 func openTexFile(outputPath string, texFilename string) (*os.File, error) {
