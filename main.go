@@ -11,8 +11,10 @@ import (
 	"text/template"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type Document struct {
@@ -226,7 +228,13 @@ func main() {
 			return
 		}
 	})
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	m := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("hapea.linearstep.com"),
+		Cache:      autocert.DirCache("/var/www/.cache"),
+	}
+
+	log.Fatal(autotls.RunWithManager(r, &m))
 }
 
 func openTexFile(outputPath string, texFilename string) (*os.File, error) {
