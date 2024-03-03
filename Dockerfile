@@ -41,4 +41,5 @@ EXPOSE 8080
 WORKDIR /home/user1/
 
 # Run
+ENV GIN_MODE=release
 CMD ["/home/user1/app", "&"]
