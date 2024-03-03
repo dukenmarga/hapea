@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"text/template"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -21,6 +22,15 @@ type Document struct {
 
 func main() {
 	r := gin.Default()
+	config := cors.Config{
+		AllowOrigins: []string{
+			"http://127.0.0.1:4000",
+			"https://linearstep.com",
+		},
+		AllowCredentials: true,
+		AllowHeaders:     []string{"Content-Type"},
+	}
+	r.Use(cors.New(config))
 
 	// Simple latex conversion from URI (GET)
 	r.GET("/api/v1/simple/:latex", func(c *gin.Context) {
@@ -268,7 +278,7 @@ func convertTexToPDF(outputPath string, texFilename string) error {
 
 func attachPDF(c *gin.Context, outputPath string, pdfFilename string) {
 	c.FileAttachment(fmt.Sprintf("%s/%s", outputPath, pdfFilename), pdfFilename)
-	c.Writer.Header().Set("Content-type", "application/octet-stream")
+	c.Writer.Header().Set("Content-type", "application/pdf")
 }
 
 func deleteTmpFiles(filename string, outputPath string) error {
