@@ -228,6 +228,8 @@ func main() {
 			return
 		}
 	})
+
+	r.Static("/", "./static/")
 	m := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist("hapea.linearstep.com"),

@@ -16,6 +16,7 @@ services:
   certbot:
     image: certbot/certbot
     volumes:
+      - ./static/:/home/user1/static/:rw
       - ./certbot/:/var/www/.cache/:rw
 networks:
   backend:
