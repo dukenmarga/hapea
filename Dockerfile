@@ -24,8 +24,8 @@ WORKDIR /home/user1/
 
 # Add non-root user
 RUN --mount=type=cache,mode=0755,target=/go/pkg/mod \
-    go mod vendor && \
-    useradd -u 8877 user1 && \
+    go mod vendor
+RUN useradd -u 8877 user1 && \
     mkdir -p /home/user1/files && \
     chown -R user1:user1 /home/user1
 
