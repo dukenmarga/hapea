@@ -2,8 +2,7 @@
 FROM golang:1.22.8-bullseye
 
 # Update software list, install Go compiler, install wget, and Tex Live
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update && \
+RUN apt-get update && \
     apt-get -y install wget && \
     apt-get -y install texlive texinfo && \
     apt-get -y install texlive-fonts-recommended && \
