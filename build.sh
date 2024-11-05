@@ -1,0 +1,2 @@
+gcloud builds submit --config cloudbuild_run.yaml --project linearstep
+gcloud run deploy hapea --platform managed --region asia-southeast2 --image gcr.io/linearstep/hapea --allow-unauthenticated --project linearstep

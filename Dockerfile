@@ -1,10 +1,5 @@
-# Debian base
-FROM debian:bullseye
-
-# Go compiler setup
-ARG file=go1.22.0.linux-amd64.tar.gz
-ARG url=https://go.dev/dl/${file}
-ENV PATH="${PATH}:/home/go-compiler/go/bin"
+# Use the official Go image as the base image
+FROM golang:1.22.8-bullseye
 
 # Update software list, install Go compiler, install wget, and Tex Live
 RUN --mount=type=cache,target=/var/cache/apt \
@@ -14,32 +9,23 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get -y install texlive-fonts-recommended && \
     apt-get -y install texlive-fonts-extra && \
     apt-get -y install texlive-latex-extra && \
-    apt-get -y install texlive-luatex && \
-    wget ${url} && \
-    rm -rf /home/go-compiler  && mkdir -p /home/go-compiler && tar -C /home/go-compiler -xzf ${file}
-
-# Copy source
-COPY . /home/user1/
-WORKDIR /home/user1/
-
-# Add non-root user
-RUN --mount=type=cache,mode=0755,target=/go/pkg/mod \
-    go mod vendor
-RUN useradd -u 8877 user1 && \
-    mkdir -p /home/user1/files && \
-    chown -R user1:user1 /home/user1
-
-USER user1
-
-# Compile and run the app
-RUN go build -o app
+    apt-get -y install texlive-luatex
 
 # Expose port
 EXPOSE 8080
 
-# Use /data as base where files directory will be
-WORKDIR /home/user1/
+# Set the working directory inside the container
+WORKDIR /goapp
+
+# Copy the application code
+COPY . .
+
+# Download the dependencies
+RUN go mod download
+
+# Build the Go application
+RUN go build -o main .
 
 # Run
 ENV GIN_MODE=release
-CMD ["/home/user1/app", "&"]
+CMD ["./main"]
