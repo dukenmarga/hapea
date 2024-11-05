@@ -11,7 +11,6 @@ import (
 	"text/template"
 
 	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -228,7 +227,7 @@ func main() {
 		}
 	})
 
-	log.Fatal(autotls.Run(r, "hapea.linearstep.com"))
+	log.Fatal(r.Run(":8080"))
 }
 
 func openTexFile(outputPath string, texFilename string) (*os.File, error) {
