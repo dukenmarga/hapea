@@ -50,7 +50,7 @@ func main() {
 
 		tmplFile := "simple-article.tmpl.tex"
 		filename := id.String()
-		outputPath := "./files/"
+		outputPath := "/tmp/"
 		texFilename := filename + ".tex"
 		pdfFilename := filename + ".pdf"
 
@@ -115,7 +115,7 @@ func main() {
 
 		tmplFile := "simple-article.tmpl.tex"
 		filename := id.String()
-		outputPath := "./files/"
+		outputPath := "/tmp/"
 		texFilename := filename + ".tex"
 		pdfFilename := filename + ".pdf"
 
@@ -179,7 +179,7 @@ func main() {
 
 		tmplFile := "simple-article.tmpl.tex"
 		filename := id.String()
-		outputPath := "./files/"
+		outputPath := "/tmp/"
 		texFilename := filename + ".tex"
 		pdfFilename := filename + ".pdf"
 
